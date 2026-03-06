@@ -1,3 +1,7 @@
+Flask
+Flask-JWT-Extended
+Flask-SQLAlchemy
+SQLAlchemy
 torch
 torchvision
 opencv-python
