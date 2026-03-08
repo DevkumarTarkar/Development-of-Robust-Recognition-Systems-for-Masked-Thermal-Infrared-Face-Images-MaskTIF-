@@ -1,67 +1,84 @@
-name: MaskTIF CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, master]
   pull_request:
-    branches: [ main ]
+    branches: [main, master]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
 
     steps:
-
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install requests
 
-      - name: Check Python Version
-        run: python --version
-
-      - name: Check Project Structure
+      - name: Verify imports
         run: |
-          ls
-          ls src
-          ls backend
-          ls frontend
+          python -c "import flask; import torch; import torchvision; print('Dependencies OK')"
 
-      - name: ML Script Syntax Check
+      - name: Create minimal model for backend check
         run: |
-          python -m py_compile src/train_model.py
-          python -m py_compile src/evaluate_model.py
-          python -m py_compile src/preprocess_images.py
+          mkdir -p models
+          python -c "
+          import torch
+          from torchvision import models
+          m = models.resnet50(weights=None)
+          m.fc = torch.nn.Linear(m.fc.in_features, 8)
+          torch.save(m.state_dict(), 'models/masktif_model.pth')
+          print('Dummy model saved')
+          "
 
-      - name: Backend Import Test
+      - name: Verify backend app loads
+        working-directory: backend
         run: |
-          python backend /app.py
+          python -c "
+          import sys
+          sys.path.insert(0, '..')
+          from app import app
+          with app.test_client() as c:
+              r = c.get('/health')
+              assert r.status_code == 200
+              assert r.json.get('status') == 'ok'
+          print('Backend health check OK')
+          "
 
-      - name: Frontend File Validation
+      - name: Verify frontend files exist
         run: |
           test -f frontend/index.html
-          test -f frontend/dashboard.html
           test -f frontend/register.html
+          test -f frontend/dashboard.html
+          test -f frontend/css/style.css
+          test -f frontend/js/auth.js
+          test -f frontend/js/predict.js
+          echo "Frontend files OK"
 
-      - name: Simple Backend API Test
+      - name: Serve frontend and verify pages load
         run: |
-          python - <<EOF
-          import requests
-          try:
-              r = requests.get("http://127.0.0.1:5000")
-              print("API Response:", r.status_code)
-          except:
-              print("Backend server not running in CI (expected)")
-          EOF
+          cd frontend
+          python -m http.server 8000 &
+          sleep 3
+          curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/index.html | grep -q 200
+          curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/register.html | grep -q 200
+          curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/dashboard.html | grep -q 200
+          echo "Frontend pages load OK"
