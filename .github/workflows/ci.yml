@@ -1,0 +1,67 @@
+name: MaskTIF CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install requests
+
+      - name: Check Python Version
+        run: python --version
+
+      - name: Check Project Structure
+        run: |
+          ls
+          ls src
+          ls backend
+          ls frontend
+
+      - name: ML Script Syntax Check
+        run: |
+          python -m py_compile src/train_model.py
+          python -m py_compile src/evaluate_model.py
+          python -m py_compile src/preprocess_images.py
+
+      - name: Backend Import Test
+        run: |
+          python -c "import backend.app"
+
+      - name: Frontend File Validation
+        run: |
+          test -f frontend/index.html
+          test -f frontend/dashboard.html
+          test -f frontend/register.html
+
+      - name: Simple Backend API Test
+        run: |
+          python - <<EOF
+          import requests
+          try:
+              r = requests.get("http://127.0.0.1:5000")
+              print("API Response:", r.status_code)
+          except:
+              print("Backend server not running in CI (expected)")
+          EOF

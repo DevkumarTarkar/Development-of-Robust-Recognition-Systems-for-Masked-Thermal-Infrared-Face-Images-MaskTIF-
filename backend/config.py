@@ -34,3 +34,10 @@ class Config:
     MODEL_PATH = os.path.join(PROJECT_ROOT, "models", "masktif_model.pth")
     TRAIN_DIR = os.path.join(PROJECT_ROOT, "data", "masked", "train")
 
+    # Rate limiting (requests per minute per IP)
+    RATELIMIT_DEFAULT = "200 per minute"
+    RATELIMIT_STORAGE_URI = os.environ.get("REDIS_URL", "memory://")
+
+    # Allowed image extensions for upload
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "gif", "webp"}
+

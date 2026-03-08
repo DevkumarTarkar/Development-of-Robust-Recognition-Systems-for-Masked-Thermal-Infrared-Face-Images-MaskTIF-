@@ -88,7 +88,8 @@ MaskTIF_Project/
 │   ├── preprocess_images.py
 │   ├── generate_masks.py
 │   ├── train_model.py
-│   └── evaluate_model.py
+│   ├── evaluate_model.py
+│   └── export_model.py
 ├── config.py                  # Re‑exports backend.Config for tooling
 ├── README.md
 └── requirements.txt           # Core training/runtime dependencies
@@ -264,6 +265,30 @@ Example results:
 - Precision: **0.67**
 - Recall: **0.63**
 - F1‑score: **0.63**
+
+### Export model for deployment
+
+Export the trained model to PyTorch (.pth) and ONNX (.onnx) formats:
+
+```bash
+python src/export_model.py
+```
+
+Output:
+
+- `models/masktif_model.pth` – PyTorch state dict (used by backend)
+- `models/masktif_model.onnx` – ONNX format for other runtimes (TensorFlow, mobile, etc.)
+
+---
+
+## Security
+
+- **Rate limiting** – Flask-Limiter: 10 req/min for `/register`, `/login`; 30 req/min for `/predict`
+- **Security headers** – `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Strict-Transport-Security`
+- **Input validation** – Email format, username (3–30 chars, alphanumeric), password (min 8 chars, letter + digit), allowed image types for upload
+- **CORS** – Configured for frontend on a different port
+- **Password hashing** – Werkzeug; no plain-text passwords
+- **SQL injection** – SQLAlchemy ORM (parameterized queries)
 
 ---
 

@@ -9,6 +9,7 @@ from flask_jwt_extended import JWTManager
 
 from config import Config
 from database import db
+from limiter import limiter
 from model_loader import load_model
 
 
@@ -42,9 +43,11 @@ def create_app() -> Flask:
     # Configure logging before other components so they can log during init
     configure_logging(app)
 
-    # Initialize database and JWT
+    # Initialize database, JWT, and rate limiter
     db.init_app(app)
     JWTManager(app)
+    app.config.setdefault("RATELIMIT_STORAGE_URI", Config.RATELIMIT_STORAGE_URI)
+    limiter.init_app(app)
 
     # Import and register blueprints
     from routes.auth_routes import auth_bp
@@ -54,12 +57,20 @@ def create_app() -> Flask:
     app.register_blueprint(predict_bp)
 
     @app.after_request
-    def add_cors_headers(response):
-        """Allow frontend on a different port (e.g. 8000) to call this API."""
+    def add_headers(response):
+        """CORS and security headers."""
 
+        # CORS
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+
+        # Security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
         return response
 
     @app.route("/health", methods=["GET"])

@@ -1,6 +1,7 @@
 Flask
 Flask-JWT-Extended
 Flask-SQLAlchemy
+Flask-Limiter
 SQLAlchemy
 torch
 torchvision
