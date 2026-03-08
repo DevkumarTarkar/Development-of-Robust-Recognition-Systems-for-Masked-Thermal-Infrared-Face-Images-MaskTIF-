@@ -47,7 +47,7 @@ jobs:
 
       - name: Backend Import Test
         run: |
-          python -c "import backend.app"
+          python backend /app.py
 
       - name: Frontend File Validation
         run: |
