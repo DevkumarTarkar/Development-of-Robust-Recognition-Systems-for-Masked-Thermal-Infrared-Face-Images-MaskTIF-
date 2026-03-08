@@ -1,5 +1,5 @@
 # MaskTIF – Masked Thermal Infrared Face Recognition
-
+![CI Pipeline](https://github.com/DevkumarTarkar/Development-of-Robust-Recognition-Systems-for-Masked-Thermal-Infrared-Face-Images-MaskTIF-/actions/workflows/ci.yml/badge.svg)
 ## Overview
 
 MaskTIF is an end‑to‑end system for recognizing individuals from **thermal infrared face images**, even when faces are partially occluded by masks.  
