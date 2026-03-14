@@ -4,11 +4,7 @@ FROM python:3.11-slim
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install system dependencies required by OpenCV and PyTorch
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+# No system graphics dependencies needed with opencv-python-headless
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
