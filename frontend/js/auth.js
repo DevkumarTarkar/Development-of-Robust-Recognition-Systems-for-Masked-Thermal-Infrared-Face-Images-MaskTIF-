@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:5001';
+const API_BASE_URL = 'https://masktif-api.onrender.com';
 const TOKEN_KEY = 'masktif_jwt_token';
 
 function setToken(token) {
