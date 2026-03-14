@@ -1,5 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg-dark: #0f172a;
+  --bg-gradient: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --primary-accent: #8b5cf6;
+  --primary-hover: #7c3aed;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg-gradient);
+  color: var(--text-main);
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* Glassmorphism Cards */
+.card, .login-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  color: var(--text-main);
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .login-card {
@@ -7,6 +40,73 @@ body {
   width: 100%;
 }
 
+/* Navbar Tuning */
+.navbar {
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: linear-gradient(to right, #a78bfa, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Inputs */
+.form-control {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+  color: white;
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+.form-label {
+  color: var(--text-muted);
+  font-weight: 300;
+}
+
+/* Custom Gradient Button */
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.6rem 1.2rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4);
+}
+
+.btn-outline-light {
+  border-radius: 0.5rem;
+  border: 1px solid var(--glass-border);
+}
+
+.btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Layout Utilities */
 .min-vh-100 {
   min-height: 100vh;
 }
@@ -14,14 +114,16 @@ body {
 #image-preview {
   max-height: 300px;
   object-fit: contain;
+  border-color: var(--glass-border) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
-.card {
-  border-radius: 0.75rem;
+a {
+  color: #a78bfa;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-.navbar-brand {
-  font-weight: 600;
-  letter-spacing: 0.03em;
+a:hover {
+  color: #c084fc;
 }
-
