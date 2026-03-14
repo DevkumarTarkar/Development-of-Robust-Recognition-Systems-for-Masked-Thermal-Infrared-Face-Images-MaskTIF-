@@ -54,8 +54,16 @@ def load_model(
         return _model, _class_names
 
     if not os.path.exists(model_path):
-        logger.error("Model file not found at %s", model_path)
-        raise FileNotFoundError(f"Model file not found at {model_path}")
+        logger.info("Model file not found locally. Downloading from Google Drive...")
+        import gdown
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        file_id = '1eLD9E7SAu76ksd25AquQmVJpo-_MQ2F9'
+        url = f'https://drive.google.com/uc?id={file_id}'
+        gdown.download(url, model_path, quiet=False)
+        if not os.path.exists(model_path):
+            logger.error("Download failed. Model file not found at %s", model_path)
+            raise FileNotFoundError(f"Model file not found at {model_path}")
+        logger.info("Model downloaded successfully!")
 
     _class_names = _discover_class_names(train_dir)
 

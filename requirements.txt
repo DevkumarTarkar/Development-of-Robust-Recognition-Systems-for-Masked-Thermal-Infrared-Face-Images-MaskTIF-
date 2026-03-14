@@ -12,3 +12,4 @@ tqdm
 Pillow
 gunicorn
 python-dotenv
+gdown
