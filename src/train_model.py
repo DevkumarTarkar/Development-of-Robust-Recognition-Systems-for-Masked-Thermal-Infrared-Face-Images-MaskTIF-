@@ -7,9 +7,10 @@ import os
 
 data_dir = "data/masked"
 
-# preprocessing for model
+# preprocessing for model - using Grayscale for thermal images
 transform = transforms.Compose([
     transforms.Resize((224,224)),
+    transforms.Grayscale(num_output_channels=3),  # Convert to standard 3-channel grayscale for ResNet
     transforms.RandomHorizontalFlip(),
     transforms.RandomRotation(10),
     transforms.ToTensor()
@@ -34,7 +35,7 @@ criterion = nn.CrossEntropyLoss()
 
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-epochs = 20
+epochs = 25
 
 for epoch in range(epochs):
 

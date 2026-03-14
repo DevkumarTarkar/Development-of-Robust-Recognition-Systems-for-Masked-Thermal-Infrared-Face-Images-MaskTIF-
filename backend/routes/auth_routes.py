@@ -93,7 +93,7 @@ def login():
         logger.warning("Failed login attempt for user: %s", username)
         return jsonify({"message": "Invalid username or password"}), 401
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
     logger.info("User %s logged in successfully", username)
     return jsonify({"access_token": access_token}), 200
 

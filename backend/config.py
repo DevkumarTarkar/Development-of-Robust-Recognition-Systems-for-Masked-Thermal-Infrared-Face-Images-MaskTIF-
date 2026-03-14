@@ -4,7 +4,10 @@ Centralizes paths, secrets, database URI, and other runtime options.
 """
 
 import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # This points to the MaskTIF_Project folder that contains data/, models/, src/, etc.
