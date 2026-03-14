@@ -176,7 +176,7 @@ Each call also inserts a row into the `predictions` table with:
 
 ## Frontend
 
-The frontend is a static web app (no framework) using **HTML, CSS, Bootstrap 5, and vanilla JavaScript**.
+The frontend is a static web app using **HTML, Bootstrap 5, and vanilla JavaScript** featuring a **Premium Dark Theme** with **Glassmorphism** styling and vibrant gradient highlights.
 
 - `index.html` – login page (username, password)
 - `register.html` – registration page (username, email, password)
@@ -259,12 +259,12 @@ The evaluation script computes:
 - F1‑score
 - Confusion matrix
 
-Example results:
+Example results (20 Epochs on Thermal Masked Dataset):
 
-- Accuracy: **62.5%**
-- Precision: **0.67**
-- Recall: **0.63**
-- F1‑score: **0.63**
+- Accuracy: **~57.2%**
+- Precision: **~0.58**
+- Recall: **~0.57**
+- F1‑score: **~0.55**
 
 ### Export model for deployment
 

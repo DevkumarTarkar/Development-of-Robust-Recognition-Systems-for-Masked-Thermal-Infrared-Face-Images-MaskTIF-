@@ -8,3 +8,5 @@ backend/uploads/
 backend/logs/
 *.db
 .env
+*.onnx
+.DS_Store

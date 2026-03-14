@@ -10,4 +10,5 @@ scikit-learn
 matplotlib
 tqdm
 Pillow
+gunicorn
 python-dotenv
