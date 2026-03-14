@@ -66,17 +66,27 @@ def load_model(
         logger.info("Model downloaded successfully!")
 
     _class_names = _discover_class_names(train_dir)
+    if not _class_names:
+        # Fallback for deployment environments without the training dataset directory
+        _class_names = ['person_1', 'person_2', 'person_3', 'person_4', 'person_5', 'person_6', 'person_7', 'person_8', 'person_group1']
 
-    # Create a ResNet50 architecture and adjust the final layer to match
-    # the number of classes from the training data.
+    # Load state dict first to infer the number of classes
+    state_dict = torch.load(model_path, map_location=_device)
+    
+    # Create a ResNet50 architecture
     resnet = models.resnet50(weights=None)
     num_features = resnet.fc.in_features
-    num_classes = len(_class_names) if _class_names else None
+    
+    # Automatically infer num_classes from the state_dict
+    fc_weight = state_dict.get('fc.weight')
+    num_classes = len(_class_names)
+    if fc_weight is not None:
+        num_classes = fc_weight.shape[0]
 
-    if num_classes:
-        resnet.fc = torch.nn.Linear(num_features, num_classes)
+    # Adjust the final layer
+    resnet.fc = torch.nn.Linear(num_features, num_classes)
 
-    state_dict = torch.load(model_path, map_location=_device)
+    # Now load the state dict safely
     resnet.load_state_dict(state_dict)
     resnet.to(_device)
     resnet.eval()
