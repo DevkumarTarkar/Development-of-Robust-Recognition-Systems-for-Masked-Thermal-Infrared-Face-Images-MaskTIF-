@@ -10,6 +10,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download the large model into the Docker image directly.
+# This prevents downloading it during cold starts, bypassing Render's 100-second timeout.
+RUN mkdir -p /app/models
+RUN gdown --id 1eLD9E7SAu76ksd25AquQmVJpo-_MQ2F9 -O /app/models/masktif_model.pth
+
 # Copy the backend code and models into the container
 COPY backend/ ./backend/
 COPY models/ ./models/
