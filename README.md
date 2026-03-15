@@ -15,6 +15,17 @@ This repository can be used as a reference for research demos and small‑scale 
 
 ---
 
+## 🚀 Live Demo & Deployment
+
+The MaskTIF project is fully deployed and accessible over the internet! You do not need to set it up locally to try it out.
+
+- **Frontend (Web Application):** [masktif-face-recognition.vercel.app](https://masktif-face-recognition.vercel.app) *(Hosted on Vercel)*
+- **Backend (REST API):** [masktif-api.onrender.com](https://masktif-api.onrender.com) *(Hosted on Render)*
+
+> **Note:** The backend is hosted on a free Render instance. It may take up to 2 minutes to "wake up" from sleep if it hasn't been accessed recently. If you experience a "Network Error", simply wait a moment and try again.
+
+---
+
 ## Core Features
 
 - **Thermal face preprocessing**
