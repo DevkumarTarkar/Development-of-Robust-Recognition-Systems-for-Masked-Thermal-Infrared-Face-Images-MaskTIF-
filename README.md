@@ -102,6 +102,9 @@ MaskTIF_Project/
 │   ├── evaluate_model.py
 │   └── export_model.py
 ├── config.py                  # Re‑exports backend.Config for tooling
+├── .gitignore                 # Files and folders ignored by Git
+├── Dockerfile                 # Configuration for Render deployment
+├── LICENSE                    # MIT License file for open source usage
 ├── README.md
 └── requirements.txt           # Core training/runtime dependencies
 ```
