@@ -5,6 +5,7 @@ import os
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask, jsonify
+from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 from config import Config
@@ -48,6 +49,7 @@ def create_app() -> Flask:
     JWTManager(app)
     app.config.setdefault("RATELIMIT_STORAGE_URI", Config.RATELIMIT_STORAGE_URI)
     limiter.init_app(app)
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # Import and register blueprints
     from routes.auth_routes import auth_bp
@@ -58,12 +60,7 @@ def create_app() -> Flask:
 
     @app.after_request
     def add_headers(response):
-        """CORS and security headers."""
-
-        # CORS
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        """Security headers."""
 
         # Security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
