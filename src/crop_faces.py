@@ -1,66 +1,105 @@
 import os
 import cv2
+image_path = "data/raw/Chips_Thermal_Face_Dataset/images"
+label_path = "data/raw/Chips_Thermal_Face_Dataset/annotations_yolo_format"
+output_path = "data/processed/faces"
 
-# Paths
-img_dir = "data/raw/Chips_Thermal_Face_Dataset/images"
-label_dir = "data/raw/Chips_Thermal_Face_Dataset/annotations_yolo_format"
+# create output folder
+os.makedirs(output_path, exist_ok=True)
 
-output_dir = "data/processed/faces"
+total_images = 0
+saved_images = 0
+missing_label = 0
 
-# Create output folder
-os.makedirs(output_dir, exist_ok=True)
+# all images
+files = os.listdir(image_path)
 
-for img_name in os.listdir(img_dir):
+for file in files:
 
-    img_path = os.path.join(img_dir, img_name)
+    # only image files
+    if not file.lower().endswith((".jpg", ".jpeg", ".png")):
+        continue
+
+    total_images += 1
+
+    img_file = os.path.join(image_path, file)
 
     # label file name
-    label_name = os.path.splitext(img_name)[0] + ".txt"
-    label_path = os.path.join(label_dir, label_name)
+    name = os.path.splitext(file)[0]
+    txt_file = os.path.join(label_path, name + ".txt")
 
-    image = cv2.imread(img_path)
-
-    if image is None:
+    # if label not found
+    if not os.path.exists(txt_file):
+        missing_label += 1
         continue
 
-    h, w, _ = image.shape
+    # read image
+    img = cv2.imread(img_file)
 
-    if not os.path.exists(label_path):
+    if img is None:
         continue
 
-    with open(label_path, "r") as f:
-        lines = f.readlines()
+    h, w = img.shape[:2]
+
+    # read label file
+    f = open(txt_file, "r")
+    lines = f.readlines()
+    f.close()
+
+    last_crop = None
 
     for line in lines:
 
-        values = list(map(float, line.split()))
+        data = line.strip().split()
 
-        # handle both formats
-        if len(values) == 5:
-            cls, x, y, bw, bh = values
-        elif len(values) == 4:
-            x, y, bw, bh = values
-        else:
+        # yolo format can be 5 values
+        if len(data) < 5:
             continue
 
-        # convert YOLO format to pixel coordinates
-        x = int(x * w)
-        y = int(y * h)
-        bw = int(bw * w)
-        bh = int(bh * h)
+        # class id ignore
+        x = float(data[1])
+        y = float(data[2])
+        bw = float(data[3])
+        bh = float(data[4])
 
-        x1 = int(x - bw / 2)
-        y1 = int(y - bh / 2)
-        x2 = int(x + bw / 2)
-        y2 = int(y + bh / 2)
+        # convert to pixel values
+        center_x = int(x * w)
+        center_y = int(y * h)
 
-        face = image[y1:y2, x1:x2]
+        box_w = int(bw * w)
+        box_h = int(bh * h)
 
-        if face.size == 0:
+        x1 = int(center_x - box_w / 2)
+        y1 = int(center_y - box_h / 2)
+        x2 = int(center_x + box_w / 2)
+        y2 = int(center_y + box_h / 2)
+
+        # boundary check
+        if x1 < 0:
+            x1 = 0
+        if y1 < 0:
+            y1 = 0
+        if x2 > w:
+            x2 = w
+        if y2 > h:
+            y2 = h
+
+        crop = img[y1:y2, x1:x2]
+
+        if crop.size == 0:
             continue
 
-        save_path = os.path.join(output_dir, img_name)
+        last_crop = crop
 
-        cv2.imwrite(save_path, face)
+    # save last valid crop
+    if last_crop is not None:
 
-print("Faces cropped successfully!")
+        save_file = os.path.join(output_path, file)
+
+        cv2.imwrite(save_file, last_crop)
+        saved_images += 1
+
+print("Face cropping completed")
+print("Total Images =", total_images)
+print("Faces Saved =", saved_images)
+print("Missing Labels =", missing_label)
