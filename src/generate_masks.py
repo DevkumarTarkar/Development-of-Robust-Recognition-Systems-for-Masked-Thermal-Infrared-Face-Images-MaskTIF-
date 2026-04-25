@@ -1,43 +1,81 @@
 import os
 import cv2
 
-# input dataset (preprocessed images)
-input_dir = "data/preprocessed"
+# input folder
+input_path = "data/preprocessed"
 
-# output dataset (masked images)
-output_dir = "data/masked"
+# output folder
+output_path = "data/masked"
 
-for split in ["train", "val", "test"]:
+# dataset folders
+folders = ["train", "val", "test"]
 
-    split_path = os.path.join(input_dir, split)
+# mask start position (55% from top)
+mask_ratio = 0.55
 
-    for person in os.listdir(split_path):
+total_images = 0
+saved_images = 0
 
-        person_path = os.path.join(split_path, person)
+for folder in folders:
 
-        output_person = os.path.join(output_dir, split, person)
+    split_folder = os.path.join(input_path, folder)
 
-        os.makedirs(output_person, exist_ok=True)
+    # skip if folder not found
+    if not os.path.exists(split_folder):
+        continue
 
-        for img in os.listdir(person_path):
+    persons = os.listdir(split_folder)
 
-            img_path = os.path.join(person_path, img)
+    for person in persons:
 
+        person_folder = os.path.join(split_folder, person)
+
+        if not os.path.isdir(person_folder):
+            continue
+
+        # output person folder
+        save_person = os.path.join(output_path, folder, person)
+        os.makedirs(save_person, exist_ok=True)
+
+        images = os.listdir(person_folder)
+
+        for img in images:
+
+            # only image files
+            if not img.lower().endswith((".jpg", ".jpeg", ".png")):
+                continue
+
+            total_images += 1
+
+            img_path = os.path.join(person_folder, img)
+
+            # read image
             image = cv2.imread(img_path)
 
             if image is None:
                 continue
 
-            h, w, _ = image.shape
+            h, w = image.shape[:2]
 
-            # mask position (lower part of face)
-            mask_start = int(h * 0.55)
+            # mask start point
+            y = int(h * mask_ratio)
 
-            # draw synthetic mask
-            cv2.rectangle(image, (0, mask_start), (w, h), (0, 0, 0), -1)
+            # black mask on lower face
+            cv2.rectangle(
+                image,
+                (0, y),
+                (w, h),
+                (0, 0, 0),
+                -1
+            )
 
-            save_path = os.path.join(output_person, img)
+            # save image
+            save_path = os.path.join(save_person, img)
 
             cv2.imwrite(save_path, image)
 
-print("Synthetic masked dataset generated successfully!")
+            saved_images += 1
+
+print("Masked dataset created")
+print("Total Images =", total_images)
+print("Saved Images =", saved_images)
