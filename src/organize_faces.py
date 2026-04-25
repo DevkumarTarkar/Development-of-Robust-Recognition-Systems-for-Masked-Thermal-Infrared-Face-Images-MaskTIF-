@@ -1,25 +1,54 @@
 import os
 import shutil
 
-input_dir = "data/processed/faces"
-output_dir = "data/processed/faces_by_person"
+# input folder
+input_path = "data/processed/faces"
 
-os.makedirs(output_dir, exist_ok=True)
+# output folder
+output_path = "data/processed/faces_by_person"
 
-for img in os.listdir(input_dir):
+# create output folder
+os.makedirs(output_path, exist_ok=True)
 
-    if not img.endswith(".jpeg"):
+total_images = 0
+copied_images = 0
+
+# all files
+files = os.listdir(input_path)
+
+for file in files:
+
+    # only image files
+    if not file.lower().endswith((".jpg", ".jpeg", ".png")):
         continue
 
-    person_id = img.split("_")[0]
+    total_images += 1
 
-    person_folder = os.path.join(output_dir, f"person_{person_id}")
+    # file name example: 1_1.jpeg
+    parts = file.split("_")
+
+    # if wrong name then skip
+    if len(parts) < 2:
+        continue
+
+    person_id = parts[0]
+
+    # create person folder
+    person_folder = os.path.join(
+        output_path,
+        "person_" + person_id
+    )
 
     os.makedirs(person_folder, exist_ok=True)
 
-    src = os.path.join(input_dir, img)
-    dst = os.path.join(person_folder, img)
+    # source and destination
+    src = os.path.join(input_path, file)
+    dst = os.path.join(person_folder, file)
 
     shutil.copy(src, dst)
 
-print("Dataset organized by person successfully!")
+    copied_images += 1
+
+print("Dataset organized successfully")
+print("Total Images =", total_images)
+print("Copied Images =", copied_images)
