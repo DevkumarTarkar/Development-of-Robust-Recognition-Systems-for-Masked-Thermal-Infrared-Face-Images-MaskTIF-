@@ -30,7 +30,8 @@ RUN mkdir -p /app/models
 # Download trained model from Google Drive
 # Fixed gdown syntax
 # ------------------------------------------
-RUN gdown "https://drive.google.com/uc?id=1eLD9E7SAu76ksd25AquQmVJpo-_MQ2F9" \
+RUN pip install --no-cache-dir gdown && \
+    gdown "https://drive.google.com/uc?id=1eLD9E7SAu76ksd25AquQmVJpo-_MQ2F9" \
     -O /app/models/masktif_model.pth
 
 
