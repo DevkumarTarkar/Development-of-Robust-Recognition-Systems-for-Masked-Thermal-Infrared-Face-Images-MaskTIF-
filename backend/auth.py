@@ -1,19 +1,15 @@
-"""Authentication helpers for the MaskTIF backend.
-
-This module is responsible for password hashing and verification utilities.
-"""
-
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
-def hash_password(plain_password: str) -> str:
-    """Return a secure password hash for the given plain text password."""
+# ------------------------------------------
+# create hashed password before storing
+# ------------------------------------------
+def hash_password(password):
+    return generate_password_hash(password)
 
-    return generate_password_hash(plain_password)
 
-
-def verify_password(password_hash: str, candidate_password: str) -> bool:
-    """Verify a plain text password against the stored password hash."""
-
-    return check_password_hash(password_hash, candidate_password)
-
+# ------------------------------------------
+# verify password during login
+# ------------------------------------------
+def verify_password(stored_hash, password):
+    return check_password_hash(stored_hash, password)
