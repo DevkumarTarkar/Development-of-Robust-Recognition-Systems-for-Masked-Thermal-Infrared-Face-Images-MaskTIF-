@@ -1,23 +1,18 @@
 import os
-import torch
+import numpy as np
+import onnxruntime as ort
 from PIL import Image
-from torchvision import models, transforms
 
 from config import Config
 
 # ------------------------------------------
 # global variables
 # ------------------------------------------
-model = None
+session = None
 class_names = []
 
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
-
-
 # ------------------------------------------
-# get class names from train folder
+# get class names
 # ------------------------------------------
 def get_class_names(train_dir):
 
@@ -39,35 +34,26 @@ def get_class_names(train_dir):
 
 
 # ------------------------------------------
-# load trained model
+# load onnx model
 # ------------------------------------------
 def load_model(
     path=Config.MODEL_PATH,
     train_dir=Config.TRAIN_DIR
 ):
-
-    global model
+    global session
     global class_names
 
-    # already loaded
-    if model is not None:
-        return model, class_names
+    if session is not None:
+        return session, class_names
 
-    # model file check
     if not os.path.exists(path):
-
-        print("Model file not found.")
-
         raise FileNotFoundError(
-            "Trained model file is missing."
+            "ONNX model file not found."
         )
 
-    # get classes
     class_names = get_class_names(train_dir)
 
-    # fallback classes
     if not class_names:
-
         class_names = [
             "person_1",
             "person_2",
@@ -80,63 +66,50 @@ def load_model(
             "person_group1"
         ]
 
-    # load weights
-    state_dict = torch.load(
+    session = ort.InferenceSession(
         path,
-        map_location=device
+        providers=["CPUExecutionProvider"]
     )
 
-    # create model architecture
-    resnet = models.resnet50(
-        weights=None
-    )
+    print("ONNX model loaded")
 
-    num_features = resnet.fc.in_features
-
-    num_classes = len(class_names)
-
-    # detect classes from weights
-    if "fc.weight" in state_dict:
-
-        num_classes = state_dict[
-            "fc.weight"
-        ].shape[0]
-
-    resnet.fc = torch.nn.Linear(
-        num_features,
-        num_classes
-    )
-
-    resnet.load_state_dict(state_dict)
-
-    resnet.to(device)
-    resnet.eval()
-
-    model = resnet
-
-    print(f"Model loaded on {device}")
-
-    return model, class_names
+    return session, class_names
 
 
 # ------------------------------------------
-# image preprocessing
+# preprocess image
 # ------------------------------------------
-preprocess = transforms.Compose([
+def preprocess_image(image_path):
 
-    transforms.Resize((224, 224)),
+    image = Image.open(image_path).convert("RGB")
+    image = image.resize((224, 224))
 
-    transforms.Grayscale(
-        num_output_channels=3
-    ),
+    img = np.array(image).astype(np.float32) / 255.0
 
-    transforms.ToTensor(),
-
-    transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
+    mean = np.array(
+        [0.485, 0.456, 0.406],
+        dtype=np.float32
     )
-])
+
+    std = np.array(
+        [0.229, 0.224, 0.225],
+        dtype=np.float32
+    )
+
+    img = (img - mean) / std
+
+    img = np.transpose(img, (2, 0, 1))
+    img = np.expand_dims(img, axis=0)
+
+    return img.astype(np.float32)
+
+
+# ------------------------------------------
+# softmax
+# ------------------------------------------
+def softmax(x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 
 # ------------------------------------------
@@ -144,68 +117,47 @@ preprocess = transforms.Compose([
 # ------------------------------------------
 def predict_image(image_path):
 
-    global model
+    global session
     global class_names
 
-    if model is None:
-        raise Exception(
-            "Model not loaded yet"
-        )
+    if session is None:
+        load_model()
 
     if not os.path.exists(image_path):
         raise FileNotFoundError(
             "Image file not found"
         )
 
-    # open image
-    image = Image.open(
+    input_tensor = preprocess_image(
         image_path
-    ).convert("RGB")
-
-    # preprocess
-    tensor = preprocess(
-        image
-    ).unsqueeze(0).to(device)
-
-    # prediction
-    with torch.no_grad():
-
-        output = model(tensor)
-
-        probs = torch.softmax(
-            output,
-            dim=1
-        )[0]
-
-        confidence, pred_idx = torch.max(
-            probs,
-            dim=0
-        )
-
-    idx = pred_idx.item()
-
-    conf = float(
-        confidence.item()
     )
 
-    # confidence threshold
+    input_name = session.get_inputs()[0].name
+    output_name = session.get_outputs()[0].name
+
+    output = session.run(
+        [output_name],
+        {input_name: input_tensor}
+    )[0][0]
+
+    probs = softmax(output)
+
+    pred_idx = int(np.argmax(probs))
+    conf = float(probs[pred_idx])
+
     if conf < 0.60:
-
         label = "Unknown"
-
     else:
-
         if (
             class_names and
-            0 <= idx < len(class_names)
+            0 <= pred_idx < len(class_names)
         ):
-            label = class_names[idx]
+            label = class_names[pred_idx]
         else:
-            label = f"class_{idx}"
+            label = f"class_{pred_idx}"
 
     print(
-        f"Prediction: {label} "
-        f"({conf:.2f})"
+        f"Prediction: {label} ({conf:.2f})"
     )
 
     return label, conf
