@@ -10,8 +10,7 @@ backend/uploads/
 uploads/
 logs/
 *.log
-*.onnx
-*.onnx.data
+
 dataset/
 data/
 deployment/

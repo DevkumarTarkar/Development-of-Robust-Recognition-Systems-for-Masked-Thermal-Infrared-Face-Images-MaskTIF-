@@ -7,7 +7,6 @@ from flask_jwt_extended import JWTManager
 from config import Config
 from database import db
 from limiter import limiter
-from model_loader import load_model
 from routes.auth_routes import auth_bp
 from routes.predict import predict_bp
 
@@ -43,14 +42,17 @@ app.config.setdefault(
 
 limiter.init_app(app)
 
+# ---------------------------------------------------
 # allow frontend requests
+# ---------------------------------------------------
 CORS(
     app,
     resources={
         r"/*": {
             "origins": [
                 "http://localhost:5500",
-                "http://127.0.0.1:5500"
+                "http://127.0.0.1:5500",
+                "https://your-frontend-url.onrender.com"
             ]
         }
     }
@@ -72,18 +74,18 @@ def home():
     }), 200
 
 # ---------------------------------------------------
-# health check route
+# health route
 # ---------------------------------------------------
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({
         "status": "ok",
         "database": "connected",
-        "model": "loaded"
+        "model": "lazy-load enabled"
     }), 200
 
 # ---------------------------------------------------
-# handle page not found
+# 404 error
 # ---------------------------------------------------
 @app.errorhandler(404)
 def not_found(error):
@@ -92,7 +94,7 @@ def not_found(error):
     }), 404
 
 # ---------------------------------------------------
-# handle internal server error
+# 500 error
 # ---------------------------------------------------
 @app.errorhandler(500)
 def internal_error(error):
@@ -101,20 +103,12 @@ def internal_error(error):
     }), 500
 
 # ---------------------------------------------------
-# start app tasks
+# startup tasks
 # ---------------------------------------------------
 with app.app_context():
-
     db.create_all()
     logging.info("Database initialized")
-
-    try:
-        logging.info("Loading ML model...")
-        load_model()
-        logging.info("Model loaded successfully")
-
-    except Exception as e:
-        logging.error(f"Model loading failed: {str(e)}")
+    logging.info("ML model will load on first prediction request")
 
 # ---------------------------------------------------
 # run server
