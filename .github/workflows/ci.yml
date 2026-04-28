@@ -36,19 +36,15 @@ jobs:
 
       - name: Verify Core Imports
         run: |
-          python -c "import flask, torch, torchvision; print('Imports OK')"
+          python -c "import flask, numpy, onnxruntime; print('Imports OK')"
 
-      - name: Create Dummy Model
+      # 🔥 Torch removed (not needed now)
+
+      - name: Ensure Model Files Exist
         run: |
-          mkdir -p models
-          python -c "
-          import torch
-          from torchvision import models
-          m=models.resnet50(weights=None)
-          m.fc=torch.nn.Linear(m.fc.in_features,8)
-          torch.save(m.state_dict(),'models/masktif_model.pth')
-          print('Dummy model ready')
-          "
+          test -f models/masktif_model.onnx
+          test -f models/masktif_model.onnx.data
+          echo "ONNX model files found"
 
       - name: Test Backend Health
         working-directory: backend
@@ -71,6 +67,7 @@ jobs:
           test -f frontend/css/style.css
           test -f frontend/js/auth.js
           test -f frontend/js/predict.js
+          echo "Frontend files OK"
 
       - name: Serve Frontend
         run: |
