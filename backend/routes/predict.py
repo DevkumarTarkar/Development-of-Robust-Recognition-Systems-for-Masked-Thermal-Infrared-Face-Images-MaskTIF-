@@ -7,6 +7,7 @@ from flask import (
     jsonify,
     current_app
 )
+from time import perf_counter
 
 from flask_jwt_extended import (
     jwt_required,
@@ -50,6 +51,49 @@ def allowed_file(filename):
 
 
 # ------------------------------------------
+# prediction history route
+# ------------------------------------------
+@predict_bp.route("/predictions", methods=["GET"])
+@jwt_required()
+@limiter.limit("60 per minute")
+def list_predictions():
+    user_id = get_jwt_identity()
+
+    try:
+        limit = int(request.args.get("limit", "10"))
+    except ValueError:
+        limit = 10
+
+    limit = max(1, min(limit, 50))
+
+    user = db.session.get(User, int(user_id))
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    t0 = perf_counter()
+    rows = (
+        Prediction.query
+        .filter_by(user_id=user.id)
+        .order_by(Prediction.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    elapsed_ms = (perf_counter() - t0) * 1000.0
+    current_app.logger.info(
+        "predictions_list user_id=%s limit=%s count=%s elapsed_ms=%.1f",
+        user.id,
+        limit,
+        len(rows),
+        elapsed_ms,
+    )
+
+    return jsonify({
+        "count": len(rows),
+        "items": [p.as_dict() for p in rows],
+    }), 200
+
+
+# ------------------------------------------
 # predict route
 # ------------------------------------------
 @predict_bp.route(
@@ -61,6 +105,7 @@ def allowed_file(filename):
 def predict():
 
     try:
+        t0 = perf_counter()
 
         # check image field
         if "image" not in request.files:
@@ -184,6 +229,16 @@ def predict():
 
         db.session.commit()
 
+        elapsed_ms = (perf_counter() - t0) * 1000.0
+        current_app.logger.info(
+            "predict_ok user_id=%s file=%s predicted_person=%s confidence=%.4f elapsed_ms=%.1f",
+            user.id,
+            final_filename,
+            predicted_person,
+            float(confidence),
+            elapsed_ms,
+        )
+
         # success response
         return jsonify({
 
@@ -207,8 +262,9 @@ def predict():
     except Exception as error:
 
         current_app.logger.error(
-            f"Prediction error: "
-            f"{str(error)}"
+            "predict_error %s",
+            str(error),
+            exc_info=True
         )
 
         return jsonify({

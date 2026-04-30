@@ -1,4 +1,5 @@
 import os
+import logging
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
@@ -10,6 +11,7 @@ from config import Config
 # ------------------------------------------
 session = None
 class_names = []
+logger = logging.getLogger(__name__)
 
 # ------------------------------------------
 # get class names
@@ -17,7 +19,7 @@ class_names = []
 def get_class_names(train_dir):
 
     if not os.path.isdir(train_dir):
-        print(f"Warning: {train_dir} not found")
+        logger.warning("Train dir not found for class names: %s", train_dir)
         return []
 
     classes = [
@@ -71,7 +73,7 @@ def load_model(
         providers=["CPUExecutionProvider"]
     )
 
-    print("ONNX model loaded")
+    logger.info("ONNX model loaded: %s", path)
 
     return session, class_names
 
@@ -156,8 +158,6 @@ def predict_image(image_path):
         else:
             label = f"class_{pred_idx}"
 
-    print(
-        f"Prediction: {label} ({conf:.2f})"
-    )
+    logger.info("Prediction: %s (%.2f) image=%s", label, conf, os.path.basename(image_path))
 
     return label, conf
