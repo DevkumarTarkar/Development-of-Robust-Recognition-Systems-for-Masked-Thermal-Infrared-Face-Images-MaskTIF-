@@ -116,6 +116,29 @@ def softmax(x):
     return e_x / e_x.sum()
 
 
+def is_valid_face_image(image_path):
+    try:
+        image = Image.open(image_path).convert("L")
+        img_array = np.array(image)
+        mean_val = np.mean(img_array)
+        std_val = np.std(img_array)
+        
+        # Reject plain white/bright diagrams (Mean > 240)
+        if mean_val > 240:
+            return False
+            
+        # Reject plain black/dark images (Mean < 10)
+        if mean_val < 10:
+            return False
+            
+        # Reject images with extremely low variance (plain colors)
+        if std_val < 5:
+            return False
+            
+        return True
+    except Exception:
+        return False
+
 # ------------------------------------------
 # predict image
 # ------------------------------------------
@@ -131,6 +154,10 @@ def predict_image(image_path):
         raise FileNotFoundError(
             "Image file not found"
         )
+        
+    if not is_valid_face_image(image_path):
+        logger.warning("Image validation failed for %s", image_path)
+        return "No Face Detected", 0.0
 
     input_tensor = preprocess_image(
         image_path
