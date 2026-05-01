@@ -105,7 +105,7 @@ function setupDashboard() {
       const tr = document.createElement("tr");
 
       const tdTime = document.createElement("td");
-      tdTime.className = "text-muted";
+      tdTime.className = "text-warning";
       tdTime.textContent = formatTime(p.timestamp);
 
       const tdPerson = document.createElement("td");
@@ -136,7 +136,7 @@ function setupDashboard() {
       tdConf.appendChild(badge);
 
       const tdFile = document.createElement("td");
-      tdFile.className = "text-muted";
+      tdFile.className = "text-warning";
       tdFile.textContent = fileNameFromPath(p.image_path);
 
       tr.appendChild(tdTime);
@@ -300,7 +300,7 @@ function setupDashboard() {
 
       resultDiv.textContent = "";
       const runningP = document.createElement("p");
-      runningP.className = "text-muted";
+      runningP.className = "text-warning";
       runningP.textContent = "Running AI prediction...";
       resultDiv.appendChild(runningP);
 
@@ -426,7 +426,7 @@ function setupDashboard() {
         badge.textContent = `Confidence: ${confText}`;
 
         const fileP = document.createElement("p");
-        fileP.className = "mt-4 text-muted";
+        fileP.className = "mt-4 text-warning";
         fileP.textContent = `File: ${data?.image_name || file.name}`;
 
         wrap.appendChild(h4);

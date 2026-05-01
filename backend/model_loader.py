@@ -83,7 +83,9 @@ def load_model(
 # ------------------------------------------
 def preprocess_image(image_path):
 
-    image = Image.open(image_path).convert("RGB")
+    image = Image.open(image_path)
+    # Convert to grayscale first (like training data), then to RGB (3 channels)
+    image = image.convert("L").convert("RGB")
     image = image.resize((224, 224))
 
     img = np.array(image).astype(np.float32) / 255.0
