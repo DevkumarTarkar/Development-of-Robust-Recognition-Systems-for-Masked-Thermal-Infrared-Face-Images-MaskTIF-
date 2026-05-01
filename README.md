@@ -50,10 +50,10 @@ The MaskTIF project is fully deployed and accessible over the internet! You do n
 
 - **Model layer**
   - ResNet50 trained on masked thermal infrared images
-  - Weights stored in `models/masktif_model.pth`
+  - Exported for inference as ONNX and stored in `models/masktif_model.onnx` (and optional `.onnx.data`)
 
-- **Backend (Flask, PyTorch, SQLite)**
-  - Loads the model once at startup
+- **Backend (Flask, ONNX Runtime, SQLite)**
+  - Loads the ONNX model lazily on the first prediction request
   - REST endpoints for `/register`, `/login`, and `/predict`
   - SQLite database (`masktif.db`) via SQLAlchemy with `users` and `predictions` tables
 
@@ -118,6 +118,61 @@ MaskTIF_Project/
 - Flask
 - Flask‑JWT‑Extended
 - Flask‑SQLAlchemy / SQLAlchemy
+
+---
+
+## 🧪 Testing (Backend)
+
+Run backend tests with pytest:
+
+```bash
+cd backend
+pytest -q
+```
+
+This verifies core flows:
+- `/health`
+- `/register` + `/login` (JWT token)
+- `/predict` validation (auth + file type)
+- `/predictions` history endpoint
+
+---
+
+## ⚙️ Environment Configuration
+
+Create a local `.env` file (do **not** commit it) using the template:
+
+```bash
+cp .env.example .env
+```
+
+Common variables:
+- `SECRET_KEY`, `JWT_SECRET_KEY` (use long random strings, 32+ chars recommended)
+- `DATABASE_URL` (optional; defaults to local SQLite)
+- `CORS_ORIGINS` (comma-separated origins for frontend)
+- `REDIS_URL` (optional; for rate limiting storage in production)
+
+---
+
+## 🐳 Docker (Local)
+
+You can run the backend using Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Backend will be available at `http://127.0.0.1:5001`.
+
+---
+
+## 📡 API Endpoints (Quick Reference)
+
+- `GET /health`: health check
+- `POST /register`: create user
+- `POST /login`: returns JWT access token
+- `POST /predict` (JWT required): upload image and get prediction
+- `GET /predictions?limit=10` (JWT required): recent prediction history for the logged-in user
 - PyTorch, Torchvision
 - Pillow
 

@@ -22,6 +22,31 @@ function setupDashboard() {
   const alertId =
     "dashboard-alert";
 
+  const historyLoading =
+    document.getElementById(
+      "history-loading"
+    );
+
+  const historyEmpty =
+    document.getElementById(
+      "history-empty"
+    );
+
+  const historyTable =
+    document.getElementById(
+      "history-table"
+    );
+
+  const historyTbody =
+    document.getElementById(
+      "history-tbody"
+    );
+
+  const refreshBtn =
+    document.getElementById(
+      "refresh-history-btn"
+    );
+
   if (
     !form ||
     !fileInput ||
@@ -30,6 +55,154 @@ function setupDashboard() {
   ) {
     return;
   }
+
+  function formatTime(iso) {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString();
+  }
+
+  function fileNameFromPath(path) {
+    if (!path) return "-";
+    const normalized = String(path).replaceAll("\\", "/");
+    const parts = normalized.split("/");
+    return parts[parts.length - 1] || normalized;
+  }
+
+  function setHistoryState(state) {
+    // state: "loading" | "empty" | "table"
+    if (historyLoading) {
+      historyLoading.classList.toggle(
+        "d-none",
+        state !== "loading"
+      );
+    }
+    if (historyEmpty) {
+      historyEmpty.classList.toggle(
+        "d-none",
+        state !== "empty"
+      );
+    }
+    if (historyTable) {
+      historyTable.classList.toggle(
+        "d-none",
+        state !== "table"
+      );
+    }
+  }
+
+  function renderHistory(items) {
+    if (!historyTbody) return;
+    historyTbody.textContent = "";
+
+    if (!items || items.length === 0) {
+      setHistoryState("empty");
+      return;
+    }
+
+    for (const p of items) {
+      const tr = document.createElement("tr");
+
+      const tdTime = document.createElement("td");
+      tdTime.className = "text-muted";
+      tdTime.textContent = formatTime(p.timestamp);
+
+      const tdPerson = document.createElement("td");
+      tdPerson.textContent = p.predicted_person || "Unknown";
+
+      const tdConf = document.createElement("td");
+      const conf =
+        p.confidence !== null &&
+        p.confidence !== undefined
+          ? Math.round(p.confidence * 100)
+          : null;
+
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      if (conf === null) {
+        badge.classList.add("bg-secondary");
+        badge.textContent = "N/A";
+      } else if (conf >= 70) {
+        badge.classList.add("bg-success");
+        badge.textContent = `${conf}%`;
+      } else if (conf >= 50) {
+        badge.classList.add("bg-warning", "text-dark");
+        badge.textContent = `${conf}%`;
+      } else {
+        badge.classList.add("bg-danger");
+        badge.textContent = `${conf}%`;
+      }
+      tdConf.appendChild(badge);
+
+      const tdFile = document.createElement("td");
+      tdFile.className = "text-muted";
+      tdFile.textContent = fileNameFromPath(p.image_path);
+
+      tr.appendChild(tdTime);
+      tr.appendChild(tdPerson);
+      tr.appendChild(tdConf);
+      tr.appendChild(tdFile);
+      historyTbody.appendChild(tr);
+    }
+
+    setHistoryState("table");
+  }
+
+  async function loadHistory() {
+    const token = getToken();
+    if (!token) return;
+
+    setHistoryState("loading");
+    try {
+      const resp = await fetch(
+        `${API_BASE_URL}/predictions?limit=10`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const data = await readJsonSafely(
+        resp
+      );
+
+      if (resp.status === 401) {
+        setHistoryState("empty");
+        return;
+      }
+
+      if (!resp.ok) {
+        setHistoryState("empty");
+        showAlert(
+          alertId,
+          data?.message ||
+            "Failed to load prediction history.",
+          "warning"
+        );
+        return;
+      }
+
+      renderHistory(data?.items || []);
+    } catch (e) {
+      console.error(e);
+      setHistoryState("empty");
+    }
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener(
+      "click",
+      function () {
+        loadHistory();
+      }
+    );
+  }
+
+  // Initial history load
+  loadHistory();
 
 
   /* ------------------------------------------
@@ -125,11 +298,11 @@ function setupDashboard() {
       submitBtn.innerHTML =
         `<span class="spinner-border spinner-border-sm me-2"></span>Predicting...`;
 
-      resultDiv.innerHTML = `
-        <p class="text-muted">
-          Running AI prediction...
-        </p>
-      `;
+      resultDiv.textContent = "";
+      const runningP = document.createElement("p");
+      runningP.className = "text-muted";
+      runningP.textContent = "Running AI prediction...";
+      resultDiv.appendChild(runningP);
 
       const formData =
         new FormData();
@@ -231,46 +404,45 @@ function setupDashboard() {
             "bg-danger";
         }
 
-        resultDiv.innerHTML = `
-          <div class="text-center">
+        resultDiv.textContent = "";
+        const wrap = document.createElement("div");
+        wrap.className = "text-center";
 
-            <h4 class="mb-3">
-              Prediction Result
-            </h4>
+        const h4 = document.createElement("h4");
+        h4.className = "mb-3";
+        h4.textContent = "Prediction Result";
 
-            <h2 class="mb-3">
-              ${person}
-            </h2>
+        const h2 = document.createElement("h2");
+        h2.className = "mb-3";
+        h2.textContent = person;
 
-            <span class="badge ${badgeClass} fs-6 px-3 py-2">
-              Confidence:
-              ${
-                confidence !==
-                  null &&
-                confidence !==
-                  undefined
-                  ? confidence +
-                    "%"
-                  : "N/A"
-              }
-            </span>
+        const badge = document.createElement("span");
+        badge.className = `badge ${badgeClass} fs-6 px-3 py-2`;
+        const confText =
+          confidence !== null &&
+          confidence !== undefined
+            ? `${confidence}%`
+            : "N/A";
+        badge.textContent = `Confidence: ${confText}`;
 
-            <p class="mt-4 text-muted">
-              File:
-              ${
-                data.image_name ||
-                file.name
-              }
-            </p>
+        const fileP = document.createElement("p");
+        fileP.className = "mt-4 text-muted";
+        fileP.textContent = `File: ${data?.image_name || file.name}`;
 
-          </div>
-        `;
+        wrap.appendChild(h4);
+        wrap.appendChild(h2);
+        wrap.appendChild(badge);
+        wrap.appendChild(fileP);
+        resultDiv.appendChild(wrap);
 
         showAlert(
           alertId,
           "Prediction successful.",
           "success"
         );
+
+        // Refresh history so UI shows DB storage -> display flow
+        loadHistory();
 
       } catch (error) {
 

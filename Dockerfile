@@ -6,7 +6,6 @@ FROM python:3.11-slim
 # ------------------------------------------
 WORKDIR /app
 
-
 # ------------------------------------------
 # Copy requirements first
 # ------------------------------------------
@@ -18,22 +17,6 @@ COPY requirements.txt .
 # ------------------------------------------
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
-
-
-# ------------------------------------------
-# Create model folder
-# ------------------------------------------
-RUN mkdir -p /app/models
-
-
-# ------------------------------------------
-# Download trained model from Google Drive
-# Fixed gdown syntax
-# ------------------------------------------
-RUN pip install --no-cache-dir gdown && \
-    gdown "https://drive.google.com/uc?id=1eLD9E7SAu76ksd25AquQmVJpo-_MQ2F9" \
-    -O /app/models/masktif_model.pth
-
 
 # ------------------------------------------
 # Copy project files

@@ -59,6 +59,11 @@ jobs:
           print('Health route OK')
           "
 
+      - name: Run backend tests (pytest)
+        working-directory: backend
+        run: |
+          pytest -q
+
       - name: Verify Frontend Files
         run: |
           test -f frontend/index.html
